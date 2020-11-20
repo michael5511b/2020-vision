@@ -1,0 +1,10 @@
+build*/
+devel*/
+src/CMakeLists.txt
+.catkin_workspace
+.vscode/
+.catkin_tools/
+install*/
+bundle/
+**/*.pyc
+**/node_modules
