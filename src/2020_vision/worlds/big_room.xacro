@@ -1,4 +1,4 @@
-<sdf version='1.6'>
+<?xml version='1.0' ?>
   <world name='default'>
     <light name='sun' type='directional'>
       <cast_shadows>1</cast_shadows>
@@ -1727,14 +1727,10 @@
     <!--include>
       <uri>model://realsense_camera</uri>
     </include-->
-    <!-- Import macro for realsense-RS200 camera-->
     <xacro:include filename="$(find realsense_gazebo_plugin)/urdf/realsense-RS200.macro.xacro"/>
-    <!-- Create camera instance -->
-    <xacro:realsense-rs200>
-        <origin xyz="0 0 1.0" rpy="0 0 0" />   
-    </xacro:realsense-rs200>
-
+    <xacro:realsense-d435i prefix="bottom_" parent="link">
+    <origin xyz="0.0799 0 -0.0782" rpy="0 1.5708 0" />
+  </xacro:realsense-d435i>
 
   </world>
-  
 </sdf>
