@@ -71,7 +71,7 @@ def pc2_callback(ros_point_cloud, cam_num):
 
     # Update global list (of this camera)
     points_array_list[cam_num] = sorted_points_list
-    print(len(points_array_list[cam_num][0]))
+    # print(len(points_array_list[cam_num][0]))
 
 
 if __name__ == '__main__':
