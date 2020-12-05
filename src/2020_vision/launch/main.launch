@@ -1,24 +1,33 @@
 <launch>
-    <param
-        name="robot_description"
-        command="$(find xacro)/xacro '$(find realsense_gazebo_plugin)/urdf/multi_cam_2020_viz.xacro'"
-    />
+  <param
+    name="robot_description"
+    command="$(find xacro)/xacro '$(find realsense_gazebo_plugin)/urdf/multi_cam_2020_viz.xacro'"
+  />
+  
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find 2020_vision)/worlds/big_room.sdf"/>
-    <!-- <arg name="world_name" value="$(find 2020_vision)/worlds/big_room.xacro"/> -->
-    <arg name="gui" value="true"/>
+    <arg name="gui" value="false"/>
   </include>
+
   <node
-        name="spawn_model"
-        pkg="gazebo_ros"
-        type="spawn_model"
-        args="-urdf -param robot_description -model rs200"
-    />
-    <node name="state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-    <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_1.launch">
-    </include>
-    <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_2.launch">
-    </include>
-    <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_3.launch">
-    </include>
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-urdf -param robot_description -model rs200"
+  />
+  
+  <node name="state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  
+  <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_1.launch">
+  </include>
+  
+  <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_2.launch">
+  </include>
+  
+  <include file="$(find realsense_gazebo_plugin)/launch/depth_proc_3.launch">
+  </include>
+  
+  <node name="twenty_twenty_vision" pkg="2020_vision" type="twenty_twenty_vision.py" output="screen">
+    <param name="num_z_groups" value="5" />
+  </node>
 </launch>
