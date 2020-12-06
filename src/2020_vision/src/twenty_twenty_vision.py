@@ -30,29 +30,44 @@ class pc_container:
                                        lambda m: pc2_callback3(m, pc_obj), queue_size=1, buff_size=cloud_sub_buf_size)
 
 # Globals
-rpy_1, rpy_2, rpy_3 = [0, 0.3927, 0.7854], [0, 0.3927, -0.7854], [0, 0.3927, 3.927]
+rpy_1, rpy_2, rpy_3 = [0, np.pi/2.0, np.pi/2.0], [0, 0.3927, -0.7854], [0, 0.3927, 3.927]
 translation_1, translation_2, translation_3 = [0.4, 0.4, 2.3], [0.4, 9.6, 2.3], [9.6, 9.6, 2.3]
-
-def points_to_list(ros_point_cloud, rpy, translation):
+#[0, 0.3927, 0.7854],[0.4, 0.4, 2.3]
+def points_to_list(ros_point_cloud, rpy, translation, cam_num):
     # Transform setup.
-    rot_x = [[1, 0, 0],
-            [0, np.cos(rpy[0]), -np.sin(rpy[0])],
-            [0, np.sin(rpy[0]), np.cos(rpy[0])]]
+    rot_x = [[1, 0, 0, 0],
+            [0, np.cos(rpy[0]), -np.sin(rpy[0]), 0],
+            [0, np.sin(rpy[0]), np.cos(rpy[0]), 0],
+            [0, 0, 0, 1]]
 
-    rot_y = [[np.cos(rpy[1]), 0, np.sin(rpy[1])],
-            [0, 1, 0],
-            [-np.sin(rpy[1]), 0, np.cos(rpy[1])]]
+    rot_y = [[np.cos(rpy[1]), 0, np.sin(rpy[1]), 0],
+            [0, 1, 0, 0],
+            [-np.sin(rpy[1]), 0, np.cos(rpy[1]), 0],
+            [0, 0, 0, 1]]
 
-    rot_z = [[np.cos(rpy[2]), -np.sin(rpy[1]), 0],
-            [np.sin(rpy[2]), np.cos(rpy[1]), 0],
-            [0, 0, 1]]
+    rot_z = [[np.cos(rpy[2]), -np.sin(rpy[2]), 0, 0],
+            [np.sin(rpy[2]), np.cos(rpy[2]), 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]]
+
+    trans = [[1, 0, 0, translation[0]],
+             [0, 1, 0, translation[1]],
+             [0, 0, 1, translation[2]],
+             [0, 0, 0, 1]]
+
+    # trans = np.linalg.inv(trans)
+    rot = np.dot(rot_x, np.dot(rot_z, rot_y))
+
+    transform = np.dot(trans, rot)
+    
+
 
     # transform = np.linalg.inv(np.dot(rot_x, np.dot(rot_y, rot_z)))
-    transform = np.dot(rot_x, np.dot(rot_y, rot_z))
-    translation = np.transpose([translation])
+    # transform = np.dot(rot_x, np.dot(rot_y, rot_z))
+    # translation = np.transpose([translation])
     # translation = np.transpose([[0, 0, 0]])
-    transform = np.append(transform, translation, axis=1)
-    transform = np.append(transform, [[0, 0, 0, 1]], axis=0)
+    # transform = np.append(transform, translation, axis=1)
+    # transform = np.append(transform, [[0, 0, 0, 1]], axis=0)
     # transform = np.linalg.inv(transform)
 
     # Initialize variables.
@@ -65,12 +80,16 @@ def points_to_list(ros_point_cloud, rpy, translation):
     start_flag = False
     z_min = 0
     z_max = 0
+
+    # coord = np.dot(transform, np.transpose([[0, -2.3, 0, 1]]))
+    # print("cam_num: ", cam_num, " = ", coord)
+    # print("=================")
     
     # Read from raw data.
     for data in pc2.read_points(ros_point_cloud, skip_nans=True):
         # Transform of the points from camera frame to world frame (x, y, z)
-        raw_world_coord = np.transpose([[data[0], data[2], -data[1], 1]])
-        # raw_world_coord = np.transpose([[data[0], data[1], data[2], 1]])
+        # raw_world_coord = np.transpose([[data[0], data[2], -data[1], 1]])
+        raw_world_coord = np.transpose([[data[0], data[1], data[2], 1]])
         # transform = np.eye(4)
         world_coord = np.dot(transform, raw_world_coord)
         x, y, z = world_coord[0][0], world_coord[1][0], world_coord[2][0] 
@@ -113,7 +132,7 @@ def points_to_list(ros_point_cloud, rpy, translation):
     return sorted_points_list
 
 def pc2_callback1(ros_point_cloud, pc_obj):
-    sorted_points_list = points_to_list(ros_point_cloud, rpy_1, translation_1)
+    sorted_points_list = points_to_list(ros_point_cloud, rpy_1, translation_1, 1)
     
     # Update global list (of this camera)
     pc_obj.points_array_list[0] = sorted_points_list
@@ -124,7 +143,7 @@ def pc2_callback1(ros_point_cloud, pc_obj):
 
 
 def pc2_callback2(ros_point_cloud, pc_obj):
-    sorted_points_list = points_to_list(ros_point_cloud, rpy_2, translation_2)
+    sorted_points_list = points_to_list(ros_point_cloud, rpy_2, translation_2, 2)
 
     # Update global list (of this camera)
     pc_obj.points_array_list[1] = sorted_points_list
@@ -134,7 +153,7 @@ def pc2_callback2(ros_point_cloud, pc_obj):
         pc_obj.cloud_sub_2.unregister()
 
 def pc2_callback3(ros_point_cloud, pc_obj):
-    sorted_points_list = points_to_list(ros_point_cloud, rpy_3, translation_3)
+    sorted_points_list = points_to_list(ros_point_cloud, rpy_3, translation_3, 3)
 
     # Update global list (of this camera)
     pc_obj.points_array_list[2] = sorted_points_list
@@ -165,8 +184,8 @@ if __name__ == '__main__':
     o3d.visualization.draw_geometries([pcd1])  # Visualize the points
     # pcd1_numpy = np.asarray(pcd1.points)  # Convert points to numpy array
 
-    # downpcd1 = pcd1.voxel_down_sample(voxel_size=0.03)
-    # o3d.visualization.draw_geometries([downpcd1])
+    downpcd1 = pcd1.voxel_down_sample(voxel_size=0.03)
+    o3d.visualization.draw_geometries([downpcd1])
 
     # downpcd1.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
     # o3d.visualization.draw_geometries([downpcd1])
